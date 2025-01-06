@@ -15,7 +15,7 @@
 
 <hr style="border: 2px solid gray;"></hr>
 
-This branch provides the code to train/finetune a pretrained Phi3V-based VLA model with visual trace prompting technique. It is built on top of the original [OpenVLA](https://openvla.github.io/) codebase.
+This branch provides the code to train/finetune a pretrained Phi3V-based VLA model with or without visual trace prompting technique. It is built on top of the original [OpenVLA](https://openvla.github.io/) codebase.
 
 
 ## Installation
@@ -153,6 +153,7 @@ torchrun --nnodes 4 --nproc-per-node 8 \
             --bf16  \
             --use_flash_attention
 ```
+In case if you only want to finetune the model with the original OpenVLA format, simply remove the ``--tracevla`` flag.
 
 ## Citation
 

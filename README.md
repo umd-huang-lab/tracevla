@@ -1,6 +1,6 @@
 # TraceVLA: Visual Trace Prompting Enhances Spatial-Temporal Awareness for Generalist Robotic Policies
 
-[![arXiv](https://img.shields.io/badge/arXiv-2406.09246-df2a2a.svg?style=for-the-badge)](https://arxiv.org/abs/2412.10345)
+[![arXiv](https://img.shields.io/badge/arXiv-2412.10345-df2a2a.svg?style=for-the-badge)](https://arxiv.org/abs/2412.10345)
 [![HF Models](https://img.shields.io/badge/%F0%9F%A4%97-Models-yellow?style=for-the-badge)](https://huggingface.co/openvla/openvla-7b)
 [![Python](https://img.shields.io/badge/python-3.10-blue?style=for-the-badge)](https://www.python.org)
 [![License](https://img.shields.io/github/license/TRI-ML/prismatic-vlms?style=for-the-badge)](LICENSE)
@@ -11,59 +11,12 @@
 <hr style="border: 2px solid gray;"></hr>
 
 ## Latest Updates
-- [2024-12-21] Initial release
+- [2025-01-06] Initial release
 
 <hr style="border: 2px solid gray;"></hr>
 
-This codebase provides the code to train/finetune a pretrained Phi3V-based VLA model with visual trace prompting technique. It is built on top of [OpenVLA](https://tracevla.github.io/)
+This branch provides the code to train/finetune a pretrained Phi3V-based VLA model with visual trace prompting technique. It is built on top of [OpenVLA](https://tracevla.github.io/)
 
-## Getting Started
-
-To get started with loading and running OpenVLA models for inference, we provide a lightweight interface that leverages
-HuggingFace `transformers` AutoClasses, with minimal dependencies.
-
-For example, to load `openvla-7b` for zero-shot instruction following in the
-[BridgeData V2 environments](https://rail-berkeley.github.io/bridgedata/) with a WidowX robot:
-
-```python
-# Install minimal dependencies (`torch`, `transformers`, `timm`, `tokenizers`, ...)
-# > pip install -r https://raw.githubusercontent.com/openvla/openvla/main/requirements-min.txt
-from transformers import AutoModelForVision2Seq, AutoProcessor
-from PIL import Image
-
-import torch
-
-# Load Processor & VLA
-processor = AutoProcessor.from_pretrained("openvla/openvla-7b", trust_remote_code=True)
-vla = AutoModelForVision2Seq.from_pretrained(
-    "openvla/openvla-7b", 
-    attn_implementation="flash_attention_2",  # [Optional] Requires `flash_attn`
-    torch_dtype=torch.bfloat16, 
-    low_cpu_mem_usage=True, 
-    trust_remote_code=True
-).to("cuda:0")
-
-# Grab image input & format prompt
-image: Image.Image = get_from_camera(...)
-prompt = "In: What action should the robot take to {<INSTRUCTION>}?\nOut:"
-
-# Predict Action (7-DoF; un-normalize for BridgeData V2)
-inputs = processor(prompt, image).to("cuda:0", dtype=torch.bfloat16)
-action = vla.predict_action(**inputs, unnorm_key="bridge_orig", do_sample=False)
-
-# Execute...
-robot.act(action, ...)
-```
-
-We also provide an [example script for fine-tuning OpenVLA models for new tasks and 
-embodiments](./vla-scripts/finetune.py); this script supports different fine-tuning modes -- including (quantized) 
-low-rank adaptation (LoRA) supported by [HuggingFace's PEFT library](https://huggingface.co/docs/peft/en/index). 
-
-For deployment, we provide a lightweight script for [serving OpenVLA models over a REST API](./vla-scripts/deploy.py), 
-providing an easy way to integrate OpenVLA models into existing robot control stacks, 
-removing any requirement for powerful on-device compute.
-
----
 
 ## Installation
 
@@ -84,14 +37,58 @@ pip install "flash-attn==2.5.5" --no-build-isolation
 ```
 If you run into any problems during the installation process, please file a GitHub Issue.
 
-## Download the model
+## Zero-shot model inference of pretrained checkpoint
 
+To load a pretrained ``openvla_phi3v`` or ``tracevla_phi3v`` model for zero-shot instruction following:
 
-## Model Inference
+```
+# Load Processor & VLA
+processor = AutoProcessor.from_pretrained(
+    model_path,
+    trust_remote_code=True,
+    num_crops=1, 
+)
+
+vla = AutoModelForCausalLM.from_pretrained(
+    model_path,
+    torch_dtype=torch.bfloat16,
+    trust_remote_code=True,
+    _attn_implementation='flash_attention_2',
+    use_cache=True
+).to(device=device)
+
+# Load Processor & VLA
+with open(dataset_stats_path, "r") as f:
+    self.norm_stats = json.load(f)
+    vla.prepare_action_inference(action_norm_stats, self.processor.tokenizer.vocab_size)
+
+# Grab image input & format prompt
+image: Image.Image = get_from_camera(...)
+prompt = "In: What action should the robot take to {<INSTRUCTION>}?\nOut:"
+
+# Predict the action (7-DoF; un-normalize for BridgeData V2)
+prompt_message = {
+    'role': 'user',
+    'content': f'<|image_1|>\nWhat action should the robot take to {task_description}?',
+}
+prompt = processor.tokenizer.apply_chat_template(
+    [prompt_message], tokenize=False, add_generation_prompt=True
+)
+inputs = self.processor(prompt, [image]).to("cuda:0", dtype=torch.bfloat16)
+with torch.inference_mode():
+    action = vla.predict_action(**inputs)
+
+# Execute the action
+robot.act(action, ...)
+```
+Additionally, we have also provided the implementation of both real Widowx arm and SimplerEnv policy wrappers under ``eval``.
+
+## TraceVLA data downloading
+[Upcoming] We will be releasing our visual trace annotated data on Bridge and Fractal dataset soon. Stay tuned for the update.
 
 ## Model finetuning
 
-We also provide a training script to finetune your model with TraceVLA format, please checkout ``vla-scripts/train.sh``.
+We provide a training script to finetune your model with TraceVLA format, please checkout ``vla-scripts/train.sh``.
 
 ## Citation
 

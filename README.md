@@ -27,6 +27,17 @@ Use the setup commands below to get started:
 conda create -n tracevla_phi3 python=3.10 -y
 conda activate tracevla_phi3
 
+# Install depdencies of Co-Tracker:
+git clone https://github.com/facebookresearch/co-tracker.git
+cd co-tracker
+pip install -e .
+
+# Download Co-Tracker checkpoint
+mkdir -p checkpoints
+cd checkpoints
+wget https://huggingface.co/facebook/cotracker3/resolve/main/scaled_offline.pth
+cd ..
+
 # Clone and install the tracevla repo
 git clone https://github.com/openvla/tracevla.git
 cd tracevla
@@ -39,7 +50,8 @@ If you run into any problems during the installation process, please file a GitH
 
 ## Zero-shot model inference of pretrained checkpoint
 
-To load a pretrained ``openvla_phi3v`` or ``tracevla_phi3v`` model for zero-shot instruction following:
+We have also provided the implementation of SimplerEnv policy wrapper of both ``openvla_phi3`` and ``tracevla_phi3`` under ``prismatic/eval``. 
+In particular, to load pretrained ``openvla_phi3v`` model for zero-shot instruction following:
 
 ```
 # Load Processor & VLA
@@ -66,6 +78,7 @@ with open(dataset_stats_path, "r") as f:
 
 # Grab image input & format prompt
 image: Image.Image = get_from_camera(...)
+image = resize_image(image, (336,336))
 prompt_message = {
     'role': 'user',
     'content': f'<|image_1|>\nWhat action should the robot take to {task_description}?',
@@ -84,10 +97,40 @@ with torch.inference_mode():
 # Execute the action
 robot.act(action, ...)
 ```
-Additionally, we have also provided the implementation of both the real Widowx arm and SimplerEnv policy wrappers under ``eval``.
+For ``tracevla_phi3v`` model, in addition to the ``openvla_phi3v`` model, you also need to instantiate the trace processor:
+```
+from prismatic.eval import TraceProcessor
+trace_processor = TraceProcessor(cotracker_model_path)
+```
+Where ``cotracker_model_path`` is the path of the downloaded cotracker checkpoint ``scaled_offline.pth``.
+
+For processing the prompt & image, please use the following prompt template instead:
+```
+### Get visual trace overlaid image observation
+image = resize_image(image, (256,256)) ### 256x256 is the resolution of Co-Tracker Input Resolution
+image_overlaid, has_trace = self.trace_processors[i].process_image(image) 
+image_overlaid = resize_image(image_overlaid, (336,336)) ### 336x336 is the resolution of Phi3V image encoder.
+
+### Prepare TraceVLA prompt format
+if not has_trace:
+    prompt_message = {
+    'role': 'user',
+    'content': f'<|image_1|><|image_2|>\nWhat action should the robot take to {task_description}?',
+    }
+else:
+    prompt_message = {
+        'role': 'user',
+        'content': f'You are given two images: one with the original robot observation <|image_1|>, and another one marked with historial traces of the robot end effector and moving objects <|image_2|>.\nWhat action should the robot take to {task_description}?',
+    }
+prompt = processor.tokenizer.apply_chat_template(
+    [prompt_message], tokenize=False, add_generation_prompt=True
+)
+
+inputs = processor(prompt, [image, image_overlaid]).to("cuda:0", dtype=torch.bfloat16)
+```
 
 ## TraceVLA data downloading
-[Upcoming] We will be releasing our visual trace annotated data on Bridge and Fractal dataset soon. Stay tuned for the update.
+[Coming soon] We will soon be releasing our visual trace annotated data on Bridge and Fractal dataset. Stay tuned for the update.
 
 ## Model finetuning
 

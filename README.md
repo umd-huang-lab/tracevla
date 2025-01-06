@@ -15,7 +15,7 @@
 
 <hr style="border: 2px solid gray;"></hr>
 
-This branch provides the code to train/finetune a pretrained Phi3V-based VLA model with visual trace prompting technique. It is built on top of [OpenVLA](https://tracevla.github.io/)
+This branch provides the code to train/finetune a pretrained Phi3V-based VLA model with visual trace prompting technique. It is built on top of the original [OpenVLA](https://openvla.github.io/) codebase.
 
 
 ## Installation
@@ -84,7 +84,7 @@ with torch.inference_mode():
 # Execute the action
 robot.act(action, ...)
 ```
-Additionally, we have also provided the implementation of both real Widowx arm and SimplerEnv policy wrappers under ``eval``.
+Additionally, we have also provided the implementation of both the real Widowx arm and SimplerEnv policy wrappers under ``eval``.
 
 ## TraceVLA data downloading
 [Upcoming] We will be releasing our visual trace annotated data on Bridge and Fractal dataset soon. Stay tuned for the update.

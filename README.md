@@ -95,7 +95,7 @@ We also provide a training script to finetune your model with TraceVLA format, p
 
 ## Citation
 
-If you find our code or models useful in your work, please cite [our paper](https://arxiv.org/abs/2406.09246):
+If you find our code or models useful in your work, please cite [our paper](https://arxiv.org/abs/2412.10345):
 
 ```bibtex
 @misc{zheng2024tracevlavisualtraceprompting,

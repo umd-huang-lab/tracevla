@@ -69,7 +69,7 @@ class RLDSBatchTransform:
             dim=0,
         )
         image_sizes=torch.tensor([[336,336],])
-        return dict(pixel_values=processor_result['pixel_values'], input_ids=input_ids, labels=labels, image_sizes=image_sizes)
+        return dict(pixel_values=processor_result['pixel_values'].squeeze(0), input_ids=input_ids, labels=labels, image_sizes=image_sizes)
 
 
 class RLDSDataset(IterableDataset):

@@ -9,7 +9,6 @@ from PIL import Image
 from transforms3d.euler import euler2axangle
 from transformers import AutoModelForVision2Seq, AutoProcessor, AutoModelForCausalLM
 from trace_processor import TraceProcessor
-from cotracker.predictor import CoTrackerPredictor
 
 def resize_image(img, resize_size):
     """

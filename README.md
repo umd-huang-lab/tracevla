@@ -57,24 +57,27 @@ vla = AutoModelForCausalLM.from_pretrained(
     use_cache=True
 ).to(device=device)
 
-# Load Processor & VLA
+# Load dataset statistics 
+# For dataset inside OXE split, you can find the ``dataset_statistics.json`` file under the model repo.
+# For your custom dataset split, it will be automatically generated under the model checkpoint path after training on your custom data split.
 with open(dataset_stats_path, "r") as f:
     self.norm_stats = json.load(f)
-    vla.prepare_action_inference(action_norm_stats, self.processor.tokenizer.vocab_size)
+    vla.prepare_action_inference(action_norm_stats, processor.tokenizer.vocab_size)
 
 # Grab image input & format prompt
 image: Image.Image = get_from_camera(...)
-prompt = "In: What action should the robot take to {<INSTRUCTION>}?\nOut:"
-
-# Predict the action (7-DoF; un-normalize for BridgeData V2)
 prompt_message = {
     'role': 'user',
     'content': f'<|image_1|>\nWhat action should the robot take to {task_description}?',
 }
+
+### Process the prompt & image
 prompt = processor.tokenizer.apply_chat_template(
     [prompt_message], tokenize=False, add_generation_prompt=True
 )
 inputs = self.processor(prompt, [image]).to("cuda:0", dtype=torch.bfloat16)
+
+### Predict the action
 with torch.inference_mode():
     action = vla.predict_action(**inputs)
 

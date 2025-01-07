@@ -54,6 +54,7 @@ We have also provided the implementation of SimplerEnv policy wrapper of both ``
 In particular, to load pretrained ``openvla_phi3v`` model for zero-shot instruction following:
 
 ```
+model_path = "furonghuang-lab/openvla_phi3v" 
 # Load Processor & VLA
 processor = AutoProcessor.from_pretrained(
     model_path,
@@ -97,7 +98,7 @@ with torch.inference_mode():
 # Execute the action
 robot.act(action, ...)
 ```
-For ``tracevla_phi3v`` model, in addition to the ``openvla_phi3v`` model, you also need to instantiate the trace processor:
+For ``tracevla_phi3v`` model, to instantiate the model & processor, set ``model_path="furonghuang-lab/tracevla_phi3v"``. Additionally, you also need to instantiate the visual trace processor:
 ```
 from prismatic.eval import TraceProcessor
 trace_processor = TraceProcessor(cotracker_model_path)

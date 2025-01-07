@@ -123,6 +123,23 @@ torchrun --nnodes 4 --nproc-per-node 8 \
 ```
 In case if you only want to finetune the model with the original OpenVLA format, simply remove the ``--tracevla`` flag.
 
+## Evaluation Results on SimplerEnv Fractal + SimplerEnv:
+
+### Fractal:
+| Policy/Settings | Pick up Coke | Move near | Open/Close Drawer | Put in Drawer | Average Success Rate |
+|:------:|:------------:|:---------:|:------------:|:-----------:|:-------:|
+| (Visual Matching) OpenVLA-7B | 23.7% | **65.0%** | 57.4% | 0.% | 36.5% |
+| (Visual Matching) TraceVLA-7B | **45.0%** | 63.8% | **63.1%** | **11.1.%** | 45.8% |
+| (Variant Aggregation) OpenVLA-7B | 61.3% | 55.8% | 24.9% | 1.0% | 35.8% |
+| (Variant Aggregation) TraceVLA-7B | **64.3%** | **60.6%** | **61.6%** | **12.5.%** | **49.8%** |
+
+### Bridge:
+| Policy/Settings | Put Spoon | Put Carrot | Stack Block | Put Eggplant | Average Success Rate |
+|:------:|:------------:|:---------:|:------------:|:-----------:|:-------:|
+| OpenVLA-7B | 8.3% | **8.3%** | **4.2%** | **45.8%** | **16.7%** |
+| TraceVLA-7B | 12.5% | **16.6%** | **16.6%** | **65.0%** | **27.7%** |
+
+
 ## Citation
 
 If you find our code or models useful in your work, please cite [our paper](https://arxiv.org/abs/2412.10345):

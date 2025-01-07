@@ -1,0 +1,2 @@
+cp modeling_prismatic.py ~/.cache/huggingface/modules/transformers_modules/openvla/openvla-7b/e5822cc24559b04e532f49b1c1ddb64376c1a485/modeling_prismatic.py
+cp processing_prismatic.py ~/.cache/huggingface/modules/transformers_modules/openvla/openvla-7b/e5822cc24559b04e532f49b1c1ddb64376c1a485/processing_prismatic.py

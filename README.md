@@ -15,7 +15,7 @@
 
 <hr style="border: 2px solid gray;"></hr>
 
-This branch provides the official implementation of TraceVLA to finetune a pretrained OpenVLA model with visual trace prompting technique. It is built on top of the original [OpenVLA](https://openvla.github.io/) codebase.
+This branch provides the official implementation of TraceVLA to finetune a pretrained OpenVLA model with visual trace prompting technique. It is built on top of the original [OpenVLA](https://openvla.github.io/) codebase. For Phi3V based OpenVLA/TraceVLA model, please checkout ``phi3`` branch.
 
 
 ## Installation
@@ -49,11 +49,11 @@ If you run into any problems during the installation process, please file a GitH
 
 ## Zero-shot model inference of pretrained checkpoint
 
-We have also provided the implementation of SimplerEnv policy wrapper of both ``openvla_phi3`` and ``tracevla_phi3`` under ``prismatic/eval``. 
-In particular, to load pretrained ``openvla_phi3v`` model for zero-shot instruction following:
+We have also provided the implementation of SimplerEnv policy wrapper of ``tracevla`` under ``prismatic/eval``. 
+In particular, to load pretrained ``tracevla`` model for zero-shot instruction following:
 
 ```
-model_path = "furonghuang-lab/openvla_phi3v" 
+model_path = "furonghuang-lab/tracevla_7b" 
 # Load Processor & VLA
 processor = AutoProcessor.from_pretrained(
     model_path,
@@ -67,28 +67,27 @@ vla = AutoModelForCausalLM.from_pretrained(
     trust_remote_code=True,
     _attn_implementation='flash_attention_2',
     use_cache=True
-).to(device=device)
+).to(device='cuda')
 
-# Load dataset statistics 
-# For dataset inside OXE split, you can find the ``dataset_statistics.json`` file under the model repo.
-# For your custom dataset split, it will be automatically generated under the model checkpoint path after training on your custom data split.
-with open(dataset_stats_path, "r") as f:
-    self.norm_stats = json.load(f)
-    vla.prepare_action_inference(action_norm_stats, processor.tokenizer.vocab_size)
+# Load Visual Trace Processor
+# cotracker_model_path corresponds to the path to your downloaded scaled_offline.pth checkpoint
+from prismatic.eval.trace_processor import TraceProcessor
+trace_processor = TraceProcessor(cotracker_model_path)
 
 # Grab image input & format prompt
-image: Image.Image = get_from_camera(...)
-image = resize_image(image, (336,336))
-prompt_message = {
-    'role': 'user',
-    'content': f'<|image_1|>\nWhat action should the robot take to {task_description}?',
-}
+# In case where the visual trace returned by Co-Tracker is not valid, we use the default openvla prompt.
+openvla_prompt_template = "In: What action should the robot take to {task_description}?\nOut:"
+tracevla_prompt_template = "In: You are given two images: one with the original robot observation, and another one marked with historical traces of the robot end effector and moving objects, separated by a special separator token. What action should the robot take to {task_description}?\nOut:"
 
-### Process the prompt & image
-prompt = processor.tokenizer.apply_chat_template(
-    [prompt_message], tokenize=False, add_generation_prompt=True
-)
-inputs = self.processor(prompt, [image]).to("cuda:0", dtype=torch.bfloat16)
+image: Image.Image = get_from_camera(...)
+image_overlaid, has_trace = trace_processors.process_image(image)
+
+if not has_trace:
+    prompt = openvla_prompt_template.format(task_description=task_description)
+    inputs = processor(prompt, [image, image]).to(device='cuda', dtype=torch.bfloat16)
+else:
+    prompt = tracevla_prompt_template.format(task_description=task_description)
+    inputs = processor(prompt, [image, image_overlaid]).to(device='cuda', dtype=torch.bfloat16)
 
 ### Predict the action
 with torch.inference_mode():
@@ -96,37 +95,6 @@ with torch.inference_mode():
 
 # Execute the action
 robot.act(action, ...)
-```
-For ``tracevla_phi3v`` model, to instantiate the model & processor, set ``model_path="furonghuang-lab/tracevla_phi3v"``. Additionally, you also need to instantiate the visual trace processor:
-```
-from prismatic.eval import TraceProcessor
-trace_processor = TraceProcessor(cotracker_model_path)
-```
-Where ``cotracker_model_path`` is the path of the downloaded cotracker checkpoint ``scaled_offline.pth``.
-
-For processing the prompt & image, please use the following prompt template instead:
-```
-### Get visual trace overlaid image observation
-image = resize_image(image, (256,256)) ### 256x256 is the resolution of Co-Tracker Input Resolution
-image_overlaid, has_trace = self.trace_processors[i].process_image(image) 
-image_overlaid = resize_image(image_overlaid, (336,336)) ### 336x336 is the resolution of Phi3V image encoder.
-
-### Prepare TraceVLA prompt format
-if not has_trace:
-    prompt_message = {
-    'role': 'user',
-    'content': f'<|image_1|><|image_2|>\nWhat action should the robot take to {task_description}?',
-    }
-else:
-    prompt_message = {
-        'role': 'user',
-        'content': f'You are given two images: one with the original robot observation <|image_1|>, and another one marked with historial traces of the robot end effector and moving objects <|image_2|>.\nWhat action should the robot take to {task_description}?',
-    }
-prompt = processor.tokenizer.apply_chat_template(
-    [prompt_message], tokenize=False, add_generation_prompt=True
-)
-
-inputs = processor(prompt, [image, image_overlaid]).to("cuda:0", dtype=torch.bfloat16)
 ```
 
 ## TraceVLA data downloading

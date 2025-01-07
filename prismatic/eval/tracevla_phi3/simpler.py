@@ -44,6 +44,8 @@ class Phi3TraceVLAInference:
         device: int = 0,
     ) -> None:
         
+        self.cotracker_model_path = cotracker_model_path
+        
         self.processor = AutoProcessor.from_pretrained(
             model_path,
             trust_remote_code=True,

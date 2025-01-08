@@ -60,7 +60,7 @@ class TrainConfig:
 
     # Resume Run Parameters
     pretrained_checkpoint: Optional[Path] = None                    # Absolute Path to Checkpoint
-    is_resume: bool = True                                          # Whether we are continuing a prior training run
+    is_resume: bool = False                                         # Whether we are continuing a prior training run
                                                                     #   (only applicable given pretrained checkpoint)
     resume_step: Optional[int] = None                               # Global Step to Resume (should match checkpoint)
     resume_epoch: Optional[int] = None                              # Epoch to Resume (should match checkpoint)
@@ -80,7 +80,7 @@ class TrainConfig:
     wandb_project: str = "openvla"                                  # Name of W&B project to log to (use default!)
     wandb_entity: str = "stanford-voltron"                          # Name of entity to log under
     num_images: int = 2 ### number of images sent to vlm
-    action_loss_calculation: str = "full"  ### 'full': "original openvla way to calculate action loss", 'action_token_only': 'constrain on 256 action tokens'
+    action_loss_calculation: str = "action_token_only"  ### 'full': "original openvla way to calculate action loss", 'action_token_only': 'constrain on 256 action tokens'
 
     def __post_init__(self) -> None:
         """Lift optimization parameters from `self.vla` for ease of use =>> validate on `expected_world_size`"""

@@ -111,7 +111,7 @@ class Exp_DinoSigLIP_224px_Ours(Exp_SigLIP_224px_Bridge):
     vla_id: str = "8gpu-tracevla"
     base_vlm: Union[str, Path] = "prism-dinosiglip-224px+7b"
 
-    data_mix: str = "ours_cofinetune_fractal"
+    data_mix: str = "ours_tracevla_cofinetune"
     expected_world_size: int = 8
     global_batch_size: int = 128
     per_device_batch_size: int = 16  
@@ -125,7 +125,7 @@ class Exp_64GPU_DinoSigLIP_224px_Ours(Exp_SigLIP_224px_Bridge):
     vla_id: str = "64gpu-tracevla"
     base_vlm: Union[str, Path] = "prism-dinosiglip-224px+7b"
 
-    data_mix: str = "ours_cofinetune_fractal"
+    data_mix: str = "ours_tracevla_cofinetune"
     expected_world_size: int = 64
     global_batch_size: int = 1024
     per_device_batch_size: int = 16  
